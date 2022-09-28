@@ -16,7 +16,11 @@
     "decentraland-ecs": "latest"
   },
   "dependencies": {
+    "@dcl/ecs-scene-utils": "^1.7.5",
     "@types/cannon": "^0.1.4",
     "cannon": "github:schteppe/cannon.js"
-  }
+  },
+  "bundleDependencies": [
+    "@dcl/ecs-scene-utils"
+  ]
 }

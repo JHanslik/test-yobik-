@@ -1,15 +1,26 @@
 /*
   IMPORTANT: The tsconfig.json has been configured to include "node_modules/cannon/build/cannon.js"
 */
-import { Vec3 } from "cannon";
+import * as utils from "@dcl/ecs-scene-utils";
 import { Ball } from "./ball";
 import { loadColliders } from "./wallCollidersSetup";
+
+// create sounds
+const stadiumSound = new AudioClip("sounds/stade.mp3");
+const stadiumSource = new AudioSource(stadiumSound);
+
+const kickSound = new AudioClip("sounds/kick.mp3");
+const kickSource = new AudioSource(kickSound);
 
 // Create base scene
 const baseScene: Entity = new Entity();
 baseScene.addComponent(new GLTFShape("models/baseScene.glb"));
 baseScene.addComponent(new Transform());
+baseScene.addComponent(stadiumSource);
 engine.addEntity(baseScene);
+stadiumSource.loop = true;
+stadiumSource.volume = 5;
+stadiumSource.playing = true;
 
 // create goal
 const goal = new Entity();
@@ -28,8 +39,7 @@ goal.addComponent(
 
 engine.addEntity(goal);
 
-// const ballShapes: GLTFShape[] = [new GLTFShape("models/blueBall.glb")];
-
+// Create ball
 const shape = new GLTFShape("models/blueBall.glb");
 
 const ball2 = new Ball(
@@ -39,6 +49,8 @@ const ball2 = new Ball(
         scale: new Vector3(0.25, 0.25, 0.25),
     })
 );
+ball2.addComponent(kickSource);
+kickSource.playing = false;
 
 engine.addEntity(ball2);
 
@@ -58,6 +70,10 @@ const playerKick = () => {
         ),
         ball2Body.position
     );
+    kickSource.playing = true;
+};
+const soundOff = () => {
+    kickSource.playing = false;
 };
 const wallRebound = () => {
     const rebound = ball2Body.applyImpulse(
@@ -77,6 +93,8 @@ export class Proximity implements ISystem {
         const dist = distance(transform.position, Camera.instance.position);
         if (dist <= 0.8) {
             playerKick();
+        } else {
+            soundOff();
         }
     }
 }
