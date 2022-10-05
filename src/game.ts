@@ -54,6 +54,34 @@ kickSource.playing = false;
 
 engine.addEntity(ball2);
 
+// Create Button
+
+const button = new Entity();
+button.addComponent(new GLTFShape("models/button.glb"));
+button.addComponent(
+    new Transform({
+        position: new Vector3(30, 0.1, 2),
+        scale: new Vector3(0.7, 0.7, 0.7),
+        rotation: Quaternion.Euler(0, -45, 0),
+    })
+);
+engine.addEntity(button);
+
+// button function
+let character = 1;
+button.addComponent(
+    new OnPointerDown((e) => {
+        // if (character === 1) {
+        //     character = 2;
+        // } else if (character === 2) {
+        //     character = 3;
+        // } else {
+        //     character = 1;
+        // }
+        // log(character);
+    })
+);
+
 // Vectors
 let forwardVector: Vector3 = Vector3.Forward().rotate(Camera.instance.rotation); // Camera's forward vector
 let goalVector: Vector3 = Vector3.Right();
@@ -103,7 +131,6 @@ export class ProximityWB implements ISystem {
         const transformBall = ball2.getComponent(Transform);
         const transformGoal = goal.getComponent(Transform);
         const dist = distanceWB(transformBall.position, transformGoal.position);
-        log(dist);
         if (dist <= 0.5) {
             wallRebound();
         }
@@ -131,8 +158,10 @@ const distanceWB = (pos1: Vector3, pos2: Vector3): number => {
     const a = pos2.x - pos1.x;
     const wXStart = pos2.z - 2.5;
     const wXEnd = pos2.z + 2.5;
+    const hYStart = pos2.y - 2;
+    const hYEnd = pos2.y + 2;
 
-    if (pos1.z >= wXStart && pos1.z <= wXEnd) {
+    if (pos1.z >= wXStart && pos1.z <= wXEnd && pos1.y <= hYEnd) {
         return a * a;
     }
 };
@@ -166,6 +195,34 @@ groundBody.addShape(groundShape);
 groundBody.material = groundPhysicsMaterial;
 world.addBody(groundBody);
 
+// create button physics material
+const buttonPhysicsMaterial: CANNON.Material = new CANNON.Material(
+    "buttonMaterial"
+);
+const buttonPhysicsContactMaterial = new CANNON.ContactMaterial(
+    groundPhysicsMaterial,
+    buttonPhysicsMaterial,
+    {
+        friction: 0.4,
+        restitution: 0.75,
+    }
+);
+world.addContactMaterial(buttonPhysicsContactMaterial);
+
+const buttonTransform = button.getComponent(Transform);
+const buttonBody: CANNON.Body = new CANNON.Body({
+    mass: 0,
+    position: new CANNON.Vec3(
+        buttonTransform.position.x,
+        buttonTransform.position.y,
+        buttonTransform.position.z
+    ),
+    shape: new CANNON.Box(new CANNON.Vec3(1, 2, 1)),
+});
+buttonBody.material = new CANNON.Material("buttonMaterial");
+world.addBody(buttonBody);
+
+// Create bodies to represent the ball
 const ballPhysicsMaterial: CANNON.Material = new CANNON.Material(
     "ballMaterial"
 );
@@ -179,7 +236,6 @@ const ballPhysicsContactMaterial = new CANNON.ContactMaterial(
 );
 world.addContactMaterial(ballPhysicsContactMaterial);
 
-// Create bodies to represent each of the balls
 const ball2Transform = ball2.getComponent(Transform);
 const ball2Body = new CANNON.Body({
     mass: 5,
@@ -212,7 +268,6 @@ class updateSystem implements ISystem {
 
         // Update forward vector
         forwardVector = Vector3.Forward().rotate(Camera.instance.rotation);
-        log("Forward Vector: ", forwardVector);
     }
 }
 
