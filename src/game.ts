@@ -308,7 +308,7 @@ const ball2Body = new CANNON.Body({
         ball2Transform.position.y,
         ball2Transform.position.z
     ),
-    shape: new CANNON.Sphere(0.4),
+    shape: new CANNON.Sphere(0.3),
 });
 
 ball2Body.material = ballPhysicsMaterial;
