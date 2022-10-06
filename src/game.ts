@@ -4,6 +4,7 @@
 import * as utils from "@dcl/ecs-scene-utils";
 import { Ball } from "./ball";
 import { loadColliders } from "./wallCollidersSetup";
+import { Arissa } from "./arissa";
 
 // create sounds
 const stadiumSound = new AudioClip("sounds/stade.mp3");
@@ -39,6 +40,23 @@ goal.addComponent(
 
 engine.addEntity(goal);
 
+// Create score
+let points = 0;
+
+const score = new Entity();
+
+const scoreCount = new TextShape(`Goals : ${points.toString()}`);
+score.addComponent(scoreCount);
+
+score.addComponent(new Billboard());
+score.addComponent(
+    new Transform({
+        position: new Vector3(4, 4, 15),
+    })
+);
+
+engine.addEntity(score);
+
 // Create ball
 const shape = new GLTFShape("models/blueBall.glb");
 
@@ -67,18 +85,61 @@ button.addComponent(
 );
 engine.addEntity(button);
 
+// modifier area
+
+const modArea = new Entity();
+modArea.addComponent(
+    new AvatarModifierArea({
+        area: { box: new Vector3(32, 4, 32) },
+        modifiers: [AvatarModifiers.HIDE_AVATARS],
+    })
+);
+modArea.addComponent(
+    new Transform({
+        position: new Vector3(16, 0, 16),
+    })
+);
+
+// Arissa
+const arissa = new Arissa(
+    new GLTFShape("models/arissa.glb"),
+    new Transform({
+        position: new Vector3(0, 0.05, -0.1),
+        scale: new Vector3(0, 0, 0),
+    })
+);
+arissa.setParent(Attachable.AVATAR);
+
+// Check if player is moving
+const currentPosition = new Vector3();
+
+class CheckPlayerIsMovingSystem implements ISystem {
+    update() {
+        if (currentPosition.equals(Camera.instance.position)) {
+            arissa.playIdle();
+        } else {
+            currentPosition.copyFrom(Camera.instance.position);
+            arissa.playRunning();
+        }
+    }
+}
+engine.addSystem(new CheckPlayerIsMovingSystem());
+
 // button function
-let character = 1;
+button.addComponent(
+    new utils.ToggleComponent(utils.ToggleState.Off, (value) => {
+        if (value === utils.ToggleState.On) {
+            engine.removeEntity(modArea);
+            arissa.getComponent(Transform).scale.setAll(0);
+        } else {
+            engine.addEntity(modArea);
+            arissa.getComponent(Transform).scale.setAll(1);
+        }
+    })
+);
 button.addComponent(
     new OnPointerDown((e) => {
-        // if (character === 1) {
-        //     character = 2;
-        // } else if (character === 2) {
-        //     character = 3;
-        // } else {
-        //     character = 1;
-        // }
-        // log(character);
+        button.getComponent(utils.ToggleComponent).toggle();
     })
 );
 
@@ -112,6 +173,9 @@ const wallRebound = () => {
         ),
         ball2Body.position
     );
+    points += 1;
+    score.getComponent(TextShape).value = `Goals : ${points.toString()}`;
+    log(points);
 };
 
 // proximity between ball and player
