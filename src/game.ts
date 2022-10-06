@@ -15,7 +15,7 @@ const kickSource = new AudioSource(kickSound);
 
 // Create base scene
 const baseScene: Entity = new Entity();
-baseScene.addComponent(new GLTFShape("models/baseScene.glb"));
+// baseScene.addComponent(new GLTFShape("models/baseScene.glb"));
 baseScene.addComponent(new Transform());
 baseScene.addComponent(stadiumSource);
 engine.addEntity(baseScene);
